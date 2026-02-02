@@ -186,59 +186,56 @@ function Spinner({ items, onSpinComplete, onSpinStart, onSpinEnd, children }) {
 
   return (
     <div className="spinner-container">
-      <div className="wheel-container">
-        <div className="pointer"></div>
-        <svg
-          ref={wheelRef}
-          className={`wheel ${spinning ? "spinning" : ""}`}
-          viewBox="0 0 400 400"
-          style={{
-            transform: `rotate(${rotation}deg)`,
-            transition: spinning ? "transform 5s cubic-bezier(0.17, 0.67, 0.3, 1)" : "none",
-          }}
-        >
-          <circle cx="200" cy="200" r="190" fill="#fff" stroke="#333" strokeWidth="2" />
-          {segments.map((segment, index) => (
-            <path key={`segment-${index}`} d={segment.pathData} fill={segment.color} stroke="#333" strokeWidth="2" />
-          ))}
-          {segments.map((segment, index) => (
-            <text
-              key={`segment-text-${index}`}
-              x={segment.textX}
-              y={segment.textY}
-              fill="#000"
-              fontSize={segment.fontSize}
-              fontWeight="700"
-              textAnchor="middle"
-              dominantBaseline="middle"
-              transform={`rotate(${segment.textRotation}, ${segment.textX}, ${segment.textY})`}
-              style={{
-                pointerEvents: "none",
-                userSelect: "none",
-              }}
-            >
-              {segment.text}
-            </text>
-          ))}
-          <circle cx="200" cy="200" r="25" fill="#333" />
-        </svg>
-      </div>
-
-      <div className="spinner-controls">
-        <div
-          className="result-container"
-          style={{ height: "180px", width: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}
-        >
-          {result && !spinning ? (
+      <div className="wheel-stack">
+        {result && !spinning ? (
+          <div className="result-overlay">
             <div className="spinner-result" style={{ margin: 0 }}>
               <h3>Result:</h3>
               <div className="result-content">{result}</div>
             </div>
-          ) : (
-            <div className="result-placeholder" style={{ width: "100%", height: "100%" }}></div>
-          )}
-        </div>
+          </div>
+        ) : null}
 
+        <div className="wheel-container">
+          <div className="pointer"></div>
+          <svg
+            ref={wheelRef}
+            className={`wheel ${spinning ? "spinning" : ""}`}
+            viewBox="0 0 400 400"
+            style={{
+              transform: `rotate(${rotation}deg)`,
+              transition: spinning ? "transform 5s cubic-bezier(0.17, 0.67, 0.3, 1)" : "none",
+            }}
+          >
+            <circle cx="200" cy="200" r="190" fill="#fff" stroke="#333" strokeWidth="2" />
+            {segments.map((segment, index) => (
+              <path key={`segment-${index}`} d={segment.pathData} fill={segment.color} stroke="#333" strokeWidth="2" />
+            ))}
+            {segments.map((segment, index) => (
+              <text
+                key={`segment-text-${index}`}
+                x={segment.textX}
+                y={segment.textY}
+                fill="#000"
+                fontSize={segment.fontSize}
+                fontWeight="700"
+                textAnchor="middle"
+                dominantBaseline="middle"
+                transform={`rotate(${segment.textRotation}, ${segment.textX}, ${segment.textY})`}
+                style={{
+                  pointerEvents: "none",
+                  userSelect: "none",
+                }}
+              >
+                {segment.text}
+              </text>
+            ))}
+            <circle cx="200" cy="200" r="25" fill="#333" />
+          </svg>
+        </div>
+      </div>
+
+      <div className="spinner-actions">
         <button className="spin-button" onClick={spin} disabled={spinning || items.length === 0}>
           {spinning ? "Spinning..." : "SPIN"}
         </button>
