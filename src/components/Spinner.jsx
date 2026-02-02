@@ -5,6 +5,7 @@ function Spinner({ items, onSpinComplete, onSpinStart, onSpinEnd, children }) {
   const [rotation, setRotation] = useState(0);
   const [result, setResult] = useState(null);
   const wheelRef = useRef(null);
+  const animationRef = useRef(null);
 
   useEffect(() => {
     setResult(null);
@@ -178,8 +179,10 @@ function Spinner({ items, onSpinComplete, onSpinStart, onSpinEnd, children }) {
       if (onSpinComplete) {
         onSpinComplete(items[selectedIndex]);
       }
-    }, 4000);
+    }, 5000);
   };
+
+  // Touch interaction removed; desktop and mobile use the spin button
 
   return (
     <div className="spinner-container">
@@ -191,7 +194,7 @@ function Spinner({ items, onSpinComplete, onSpinStart, onSpinEnd, children }) {
           viewBox="0 0 400 400"
           style={{
             transform: `rotate(${rotation}deg)`,
-            transition: spinning ? "transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99)" : "none",
+            transition: spinning ? "transform 5s cubic-bezier(0.17, 0.67, 0.3, 1)" : "none",
           }}
         >
           <circle cx="200" cy="200" r="190" fill="#fff" stroke="#333" strokeWidth="2" />
