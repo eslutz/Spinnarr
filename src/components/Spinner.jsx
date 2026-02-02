@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 
-function Spinner({ items, onSpinComplete, children }) {
+function Spinner({ items, onSpinComplete, onSpinStart, onSpinEnd, children }) {
   const [spinning, setSpinning] = useState(false);
   const [rotation, setRotation] = useState(0);
   const [result, setResult] = useState(null);
@@ -10,6 +10,20 @@ function Spinner({ items, onSpinComplete, children }) {
     setResult(null);
     setSpinning(false);
   }, [items]);
+
+  useEffect(() => {
+    const handleKeyPress = (event) => {
+      if (event.code === "Space" && !spinning && items.length > 0) {
+        event.preventDefault();
+        spin();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyPress);
+    return () => {
+      window.removeEventListener("keydown", handleKeyPress);
+    };
+  }, [spinning, items.length]);
 
   // Convert HSL to RGB
   const hslToRgb = (h, s, l) => {
@@ -136,6 +150,9 @@ function Spinner({ items, onSpinComplete, children }) {
 
     setSpinning(true);
     setResult(null);
+    if (onSpinStart) {
+      onSpinStart();
+    }
 
     // Random number of full rotations (5-8) plus random angle
     const spins = 5 + Math.floor(Math.random() * 4);
@@ -155,6 +172,9 @@ function Spinner({ items, onSpinComplete, children }) {
     setTimeout(() => {
       setSpinning(false);
       setResult(items[selectedIndex]);
+      if (onSpinEnd) {
+        onSpinEnd();
+      }
       if (onSpinComplete) {
         onSpinComplete(items[selectedIndex]);
       }

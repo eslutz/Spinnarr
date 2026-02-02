@@ -1,0 +1,111 @@
+{
+  "title": "Minecraft House Build Picker",
+  "spinners": [
+    {
+      "name": "Biome",
+      "items": [
+        "Cherry Blossom",
+        "Mystic Grove",
+        "Coral Reef",
+        "Nether",
+        "Lavender Field",
+        "Mushroom Fields",
+        "Redwood Forest",
+        "Wasteland"
+      ]
+    },
+    {
+      "name": "Plot Size",
+      "items": ["10x10", "16x16", "8x32", "32x32"]
+    },
+    {
+      "name": "Number of Floors",
+      "items": ["1", "2", "3", "4", "5"]
+    },
+    {
+      "name": "Main Building Material",
+      "items": ["Wood", "Stone", "Brick", "Wool", "Earth", "Mineral/Gem"]
+    },
+    {
+      "name": "Color Palette",
+      "items": ["Black", "Red/Orange/Yellow", "Green/Blue", "Pink/Purple", "Rainbow"]
+    },
+    {
+      "name": "Roof Style",
+      "items": ["Flat Roof", "Gable Roof", "Shed Roof", "Butterfly Roof", "Dormer Roof", "Wizard Roof"]
+    },
+    {
+      "name": "Window Style",
+      "items": ["No Windows", "Square Windows", "Tall Windows", "Wide Windows", "Heart Windows"]
+    },
+    {
+      "name": "Number of Beds",
+      "items": ["1", "2", "3", "8"]
+    },
+    {
+      "name": "Interior / Decoration Style",
+      "items": [
+        "Black and White",
+        "Bright Statement Colour",
+        "Old-Fashioned",
+        "Geometric Pattern",
+        "Floral/Flowers",
+        "Chicken-Themed"
+      ]
+    },
+    {
+      "name": "Overall Build Theme",
+      "items": [
+        "Modern",
+        "Medieval",
+        "Magical",
+        "Spooky",
+        "Fantasy",
+        "Vintage",
+        "Space",
+        "Under the Sea",
+        "Dinosaurs",
+        "Music"
+      ]
+    },
+    {
+      "name": "Pattern / Surface Detail",
+      "items": [
+        "Animals",
+        "Stripey",
+        "Regal Luxury",
+        "Rainbow",
+        "Christmas",
+        "Disney",
+        "Kitschy",
+        "Minecraft Mob-Themed",
+        "Exotic Tropical Island",
+        "Steampunk",
+        "Nautical",
+        "Alice in Wonderland"
+      ]
+    },
+    {
+      "name": "Extra Room",
+      "items": [
+        "Conservatory",
+        "Basement",
+        "Indoor Pool",
+        "Home Cinema",
+        "Attic",
+        "Greenhouse",
+        "Library",
+        "Horse Stable",
+        "Nether Portal Room"
+      ]
+    },
+    {
+      "name": "Garden / Yard Feature",
+      "items": ["Vegetable Patch", "Flower Garden", "Farm Animals", "Pond", "Pets", "Trashy Yard"]
+    },
+    {
+      "name": "Crazy Feature",
+      "items": ["Water Slide", "Water Fountain", "Moat", "None", "Huge Fireplace", "Balcony", "Wishing Well"]
+    }
+  ]
+}
