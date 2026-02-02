@@ -1,11 +1,84 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
+
+const MuteIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    fill="none"
+    viewBox="0 0 24 24"
+    strokeWidth={1.5}
+    stroke="#8c94b0"
+    className="size-6"
+    width="22"
+    height="22"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M17.25 9.75 19.5 12m0 0 2.25 2.25M19.5 12l2.25-2.25M19.5 12l-2.25 2.25m-10.5-6 4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z"
+    />
+  </svg>
+);
+
+const UnmuteIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    fill="none"
+    viewBox="0 0 24 24"
+    strokeWidth={1.5}
+    stroke="#8c94b0"
+    className="size-6"
+    width="22"
+    height="22"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z"
+    />
+  </svg>
+);
 
 function Spinner({ items, onSpinComplete, onSpinStart, onSpinEnd, children }) {
   const [spinning, setSpinning] = useState(false);
   const [rotation, setRotation] = useState(0);
   const [result, setResult] = useState(null);
+  const [muted, setMuted] = useState(true);
   const wheelRef = useRef(null);
   const animationRef = useRef(null);
+  const audioContextRef = useRef(null);
+  const audioBufferRef = useRef(null); // To store the "click" buffer
+
+  // Initialize AudioContext and Create Click Buffer on Mount
+  useEffect(() => {
+    try {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContext) return;
+
+      const ctx = new AudioContext();
+      audioContextRef.current = ctx;
+
+      // Create a "white noise" buffer for a mechanical click sound
+      // This is more realistic than a sine wave oscillator
+      const bufferSize = ctx.sampleRate * 0.005; // 5ms click (very short)
+      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+
+      for (let i = 0; i < bufferSize; i++) {
+        // White noise with exponential decay
+        // This generates a "snap" sound similar to a plastic card hitting a spoke
+        data[i] = (Math.random() * 2 - 1) * Math.exp((-3 * i) / bufferSize);
+      }
+      audioBufferRef.current = buffer;
+
+      return () => {
+        if (ctx.state !== "closed") {
+          ctx.close();
+        }
+      };
+    } catch (e) {
+      console.error("Audio Context initialization failed", e);
+    }
+  }, []);
 
   useEffect(() => {
     setResult(null);
@@ -103,7 +176,7 @@ function Spinner({ items, onSpinComplete, onSpinStart, onSpinEnd, children }) {
     return colors;
   };
 
-  const colors = generateColors(items.length);
+  const colors = useMemo(() => generateColors(items.length), [items.length]);
   const segmentAngle = 360 / items.length;
 
   const segments = items.map((item, index) => {
@@ -149,6 +222,11 @@ function Spinner({ items, onSpinComplete, onSpinStart, onSpinEnd, children }) {
   const spin = () => {
     if (spinning || items.length === 0) return;
 
+    // Clear any previous animation
+    if (animationRef.current) {
+      cancelAnimationFrame(animationRef.current);
+    }
+
     setSpinning(true);
     setResult(null);
     if (onSpinStart) {
@@ -158,34 +236,108 @@ function Spinner({ items, onSpinComplete, onSpinStart, onSpinEnd, children }) {
     // Random number of full rotations (5-8) plus random angle
     const spins = 5 + Math.floor(Math.random() * 4);
     const extraDegrees = Math.floor(Math.random() * 360);
-    const totalRotation = spins * 360 + extraDegrees;
+    const totalChange = spins * 360 + extraDegrees;
 
-    // Calculate new total rotation
-    const newRotation = rotation + totalRotation;
+    const startRotation = rotation;
+    const endRotation = startRotation + totalChange;
+    const duration = 5000;
+    const startTime = performance.now();
 
-    // Calculate which segment we land on based on the FINAL rotation
-    // We normalize the total rotation to find the effective angle
-    const normalizedRotation = (360 - (newRotation % 360)) % 360;
-    const selectedIndex = Math.floor(normalizedRotation / segmentAngle) % items.length;
+    // Cubic bezier implementation for ease-out-quart
+    // The CSS equivalent was cubic-bezier(0.17, 0.67, 0.3, 1)
+    // We'll use a standard easeOutQuart or similar for JS animation
+    // t is 0-1
+    const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
+    const easeOutQuart = (t) => 1 - Math.pow(1 - t, 4);
 
-    setRotation(newRotation);
+    // Track the last "tick" angle to know when we cross a boundary
+    const segmentAngle = 360 / items.length;
+    let lastAngle = startRotation;
 
-    setTimeout(() => {
-      setSpinning(false);
-      setResult(items[selectedIndex]);
-      if (onSpinEnd) {
-        onSpinEnd();
+    const animate = (currentTime) => {
+      const elapsed = currentTime - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+
+      // Apply easing
+      const easedProgress = easeOutQuart(progress);
+
+      const currentRotation = startRotation + totalChange * easedProgress;
+      setRotation(currentRotation);
+
+      // Check for ticks
+      // We play a tick every time we cross a multiple of segmentAngle
+      const currentAngleNormalized = currentRotation % 360; // Just for debugging logic if needed
+
+      // Calculate how many segments we've passed since last frame
+      const lastSegmentIndex = Math.floor(lastAngle / segmentAngle);
+      const currentSegmentIndex = Math.floor(currentRotation / segmentAngle);
+
+      if (currentSegmentIndex > lastSegmentIndex && progress < 1.0) {
+        playTick();
       }
-      if (onSpinComplete) {
-        onSpinComplete(items[selectedIndex]);
+
+      lastAngle = currentRotation;
+
+      if (progress < 1) {
+        animationRef.current = requestAnimationFrame(animate);
+      } else {
+        setSpinning(false);
+        // Calculate result based on final angle
+        const finalNormalized = (360 - (currentRotation % 360)) % 360;
+        const selectedIndex = Math.floor(finalNormalized / segmentAngle) % items.length;
+        setResult(items[selectedIndex]);
+
+        if (onSpinEnd) onSpinEnd();
+        if (onSpinComplete) onSpinComplete(items[selectedIndex]);
       }
-    }, 5000);
+    };
+
+    animationRef.current = requestAnimationFrame(animate);
   };
 
   // Touch interaction removed; desktop and mobile use the spin button
 
+  // Improved tick sound using Web Audio API Buffer
+  // Plays a pre-generated noise burst for zero latency
+  const playTick = () => {
+    if (muted || !audioContextRef.current || !audioBufferRef.current) return;
+
+    try {
+      const ctx = audioContextRef.current;
+
+      // Resume context if suspended (browser autoplay policy)
+      if (ctx.state === "suspended") {
+        ctx.resume();
+      }
+
+      const source = ctx.createBufferSource();
+      source.buffer = audioBufferRef.current;
+
+      // Slight pitch randomization to sound organic
+      source.playbackRate.value = 0.9 + Math.random() * 0.2;
+
+      // Create a gain node for volume control
+      const gainNode = ctx.createGain();
+      gainNode.gain.value = 0.3; // Adjust volume as needed
+
+      source.connect(gainNode);
+      gainNode.connect(ctx.destination);
+
+      source.start(0);
+    } catch (e) {
+      // ignore audio errors
+    }
+  };
+
   return (
     <div className="spinner-container">
+      <button
+        className={`mute-toggle ${muted ? "active" : ""}`}
+        onClick={() => setMuted((m) => !m)}
+        aria-label={muted ? "Unmute tick sounds" : "Mute tick sounds"}
+      >
+        {muted ? <MuteIcon /> : <UnmuteIcon />}
+      </button>
       <div className="wheel-stack">
         {result && !spinning ? (
           <div className="result-overlay">
@@ -204,7 +356,8 @@ function Spinner({ items, onSpinComplete, onSpinStart, onSpinEnd, children }) {
             viewBox="0 0 400 400"
             style={{
               transform: `rotate(${rotation}deg)`,
-              transition: spinning ? "transform 5s cubic-bezier(0.17, 0.67, 0.3, 1)" : "none",
+              // Transition handled by JS requestAnimationFrame now
+              transition: "none",
             }}
           >
             <circle cx="200" cy="200" r="190" fill="#fff" stroke="#333" strokeWidth="2" />

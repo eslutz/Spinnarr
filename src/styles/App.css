@@ -186,6 +186,7 @@
   background-color: var(--background-light);
   border-radius: 16px;
   box-shadow: 0 2px 8px var(--shadow);
+  position: relative;
 }
 
 .spinner-title {
@@ -203,7 +204,10 @@
   align-items: center;
   justify-content: center;
   gap: 2rem;
-  padding: 2rem;
+  padding: 2rem; /* Keep padding for internal spacing if needed, or reduce it? */
+  width: 100%;
+  box-sizing: border-box;
+  /* Removed position: relative to allow mute button to position relative to wrapper */
 }
 
 .wheel-stack {
@@ -249,6 +253,40 @@
   align-items: center;
   gap: 1rem;
   width: 100%;
+}
+
+.mute-toggle {
+  position: absolute;
+  top: 5rem;
+  right: 5rem;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid var(--primary-color);
+  background: transparent;
+  color: #a0a7c0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1.1rem;
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s,
+    background-color 0.2s;
+  box-shadow: 0 2px 6px var(--shadow);
+  z-index: 20;
+}
+
+.mute-toggle.active {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 16px var(--shadow);
+  background: var(--mute-active-bg); /* Persistent hover look when muted */
+}
+
+.mute-toggle:active {
+  transform: translateY(0);
+  background: var(--mute-pressed-bg);
 }
 
 .wheel {

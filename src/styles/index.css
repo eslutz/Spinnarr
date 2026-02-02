@@ -15,6 +15,8 @@
   --border-color: #334155;
   --shadow: rgba(0, 0, 0, 0.3);
   --overlay: rgba(0, 0, 0, 0.8);
+  --mute-active-bg: rgba(255, 255, 255, 0.08);
+  --mute-pressed-bg: rgba(255, 255, 255, 0.12);
 }
 
 [data-theme="light"] {
@@ -28,6 +30,8 @@
   --border-color: #e2e8f0;
   --shadow: rgba(0, 0, 0, 0.1);
   --overlay: rgba(0, 0, 0, 0.5);
+  --mute-active-bg: rgba(99, 102, 241, 0.05);
+  --mute-pressed-bg: rgba(99, 102, 241, 0.1);
 }
 
 body {
