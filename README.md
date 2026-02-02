@@ -1,14 +1,17 @@
 # Spinnarr
 
-A modern web application for randomly selecting items from a JSON file. Perfect for making decisions, picking winners, or choosing what to watch/play/do next!
+A modern web application for randomly selecting items from multiple spinners. Perfect for making decisions, creating challenges, or picking random combinations!
 
 ## Features
 
-- 📁 **Upload JSON files** - Drag & drop or browse to upload
-- 🎰 **Animated spinner** - Engaging spinning animation
-- 🎨 **Theme support** - Light, dark, or system theme
-- 📱 **Responsive design** - Works on all devices
-- ✨ **Simple & intuitive** - No configuration needed
+- 📁 **Upload JSON files** - Drag & drop or browse to upload custom spinner configurations
+- 🎰 **Multiple spinners** - Navigate through multiple spinner wheels in sequence
+- 🎨 **Theme support** - Light, dark, or system theme with automatic detection
+- 📱 **Responsive design** - Works seamlessly on all devices
+- ⌨️ **Keyboard support** - Press spacebar to spin
+- 🎯 **Results tracking** - View all spinner results on a summary page
+- ✨ **Accessible colors** - Dynamic color generation with WCAG AA contrast compliance
+- 🔄 **Default configuration** - Loads with a pre-configured example (Minecraft House Builder)
 
 ## Quick Start
 
@@ -67,6 +70,7 @@ Your JSON file must follow this structure:
 
 ```json
 {
+  "title": "My Spinner Collection",
   "spinners": [
     {
       "name": "Spinner Name",
@@ -83,6 +87,7 @@ Your JSON file must follow this structure:
 ### Requirements
 
 - Root object must have a `spinners` array
+- Optional `title` field for the collection name
 - Each spinner must have:
   - `name` (string) - Display name of the spinner
   - `items` (array) - Array of string items to spin through
@@ -90,13 +95,66 @@ Your JSON file must follow this structure:
 - At least 1 item per spinner required
 - All items must be strings (no objects)
 
+### Validation
+
+The app validates uploaded JSON files against [schema.json](schema.json). Invalid files will show an error message.
+
 ### Example
 
-See `minecraftSpinnerOptions.json` for a complete example with 14 different spinners.
+See [public/minecraftSpinnerOptions.json](public/minecraftSpinnerOptions.json) for a complete example with 14 different spinners for generating random Minecraft house builds.
+
+## How It Works
+
+1. **Upload or Use Default**: Start with the pre-loaded Minecraft example or upload your own JSON file
+2. **Spin Each Wheel**: Click "SPIN" or press spacebar to spin the current wheel
+3. **Navigate**: Use "Previous" and "Next" buttons to move between spinners
+4. **View Results**: After spinning all wheels, click "View Results" to see all your selections
+5. **Start Over**: Reset and try again with "Start Over" or "Upload New File"
+
+## Configuration
+
+### Environment Variables
+
+Set `VITE_DEFAULT_SPINNER_FILE` in [.env](.env) to specify a default JSON file to load on startup:
+
+```env
+VITE_DEFAULT_SPINNER_FILE=/minecraftSpinnerOptions.json
+```
 
 ## Technologies
 
-- React 18
-- Vite
+- React 19
+- Vite 7
 - Modern CSS with CSS Variables
 - Theme switching (Light/Dark/System)
+- SVG-based wheel rendering
+- Docker support with nginx
+- WCAG AA accessible color generation
+
+## Project Structure
+
+```txt
+src/
+  ├── App.jsx                 # Main application component
+  ├── main.jsx               # Application entry point
+  ├── components/
+  │   ├── FileUpload.jsx     # Drag & drop file upload
+  │   ├── Header.jsx         # Header with theme toggle
+  │   ├── Spinner.jsx        # Spinning wheel component
+  │   └── ThemeToggle.jsx    # Theme switcher
+  └── styles/
+      ├── App.css            # Component styles
+      └── index.css          # Global styles and theme variables
+public/
+  └── minecraftSpinnerOptions.json  # Example spinner configuration
+schema.json                  # JSON schema for validation
+```
+
+## Browser Support
+
+Works on all modern browsers that support:
+
+- ES6+ JavaScript
+- CSS Variables
+- SVG
+- CSS Grid and Flexbox
