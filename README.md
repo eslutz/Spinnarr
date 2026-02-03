@@ -9,6 +9,8 @@ A modern web application for randomly selecting items from multiple spinners. Pe
 - 🎨 **Theme support** - Light, dark, or system theme with automatic detection
 - 📱 **Responsive design** - Works seamlessly on all devices
 - ⌨️ **Keyboard support** - Press spacebar to spin
+- 🔊 **Realistic Audio** - Procedurally generated "physical click" sounds with perfect video/audio sync
+- 📳 **Haptics** - Tactile vibration feedback for ticks and interactions (Android)
 - 🎯 **Results tracking** - View all spinner results on a summary page
 - ✨ **Accessible colors** - Dynamic color generation with WCAG AA contrast compliance
 - 🔄 **Default configuration** - Loads with a pre-configured example (Minecraft House Builder)
@@ -120,6 +122,25 @@ Set `VITE_DEFAULT_SPINNER_FILE` in [.env](.env) to specify a default JSON file t
 ```env
 VITE_DEFAULT_SPINNER_FILE=/minecraftSpinnerOptions.json
 ```
+
+## Audio & Haptics
+
+### Audio Engine
+
+Spinnarr uses the **Web Audio API** to generate sound effects procedurally in real-time, requiring no external assets.
+
+- **Physical Modeling**: Instead of a simple beep, the audio engine generates a burst of white noise with a sharp exponential decay (5ms) to simulate a physical plastic card hitting a spoke.
+- **Micro-Latency**: Sounds are buffered on load and triggered via `AudioBufferSourceNode` directly in the animation loop, ensuring zero latency between the visual wedge crossing and the audible click.
+- **Organic Pitch**: Each click has a slight randomized pitch variation to prevent "robotic" repetition.
+
+### Haptic Feedback
+
+The app uses the `navigator.vibrate()` API to provide tactile feedback.
+
+- **Events**: Vibrations trigger on every wedge tick, button press, and UI toggle.
+- **Compatibility**:
+  - **Android**: Fully supported (Chrome/Firefox).
+  - **iOS (iPhone/iPad)**: Not supported (Apple blocks the vibration API in Safari/WebViews). The feature gracefully degrades (no errors, just no vibration).
 
 ## Technologies
 

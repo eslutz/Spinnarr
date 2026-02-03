@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from "react";
+import { triggerHaptic } from "../utils/haptics";
 
 const MuteIcon = () => (
   <svg
@@ -227,6 +228,7 @@ function Spinner({ items, onSpinComplete, onSpinStart, onSpinEnd, children }) {
       cancelAnimationFrame(animationRef.current);
     }
 
+    triggerHaptic("medium"); // Button press feedback
     setSpinning(true);
     setResult(null);
     if (onSpinStart) {
@@ -299,7 +301,8 @@ function Spinner({ items, onSpinComplete, onSpinStart, onSpinEnd, children }) {
 
   // Improved tick sound using Web Audio API Buffer
   // Plays a pre-generated noise burst for zero latency
-  const playTick = () => {
+  cotriggerHaptic("tick"); // Synchronized vibration
+    nst playTick = () => {
     if (muted || !audioContextRef.current || !audioBufferRef.current) return;
 
     try {
@@ -332,7 +335,10 @@ function Spinner({ items, onSpinComplete, onSpinStart, onSpinEnd, children }) {
   return (
     <div className="spinner-container">
       <button
-        className={`mute-toggle ${muted ? "active" : ""}`}
+        className={`mut{
+          triggerHaptic("soft");
+          setMuted((m) => !m);
+        }"active" : ""}`}
         onClick={() => setMuted((m) => !m)}
         aria-label={muted ? "Unmute tick sounds" : "Mute tick sounds"}
       >
