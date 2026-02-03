@@ -301,8 +301,8 @@ function Spinner({ items, onSpinComplete, onSpinStart, onSpinEnd, children }) {
 
   // Improved tick sound using Web Audio API Buffer
   // Plays a pre-generated noise burst for zero latency
-  cotriggerHaptic("tick"); // Synchronized vibration
-    nst playTick = () => {
+  const playTick = () => {
+    triggerHaptic("tick"); // Synchronized vibration
     if (muted || !audioContextRef.current || !audioBufferRef.current) return;
 
     try {
@@ -335,11 +335,11 @@ function Spinner({ items, onSpinComplete, onSpinStart, onSpinEnd, children }) {
   return (
     <div className="spinner-container">
       <button
-        className={`mut{
+        className={`mute-toggle ${muted ? "active" : ""}`}
+        onClick={() => {
           triggerHaptic("soft");
           setMuted((m) => !m);
-        }"active" : ""}`}
-        onClick={() => setMuted((m) => !m)}
+        }}
         aria-label={muted ? "Unmute tick sounds" : "Mute tick sounds"}
       >
         {muted ? <MuteIcon /> : <UnmuteIcon />}
