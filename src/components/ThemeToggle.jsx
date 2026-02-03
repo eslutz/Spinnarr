@@ -47,9 +47,14 @@ function ThemeToggle() {
     }
   };
 
+  const getThemeLabel = () => {
+    return theme.charAt(0).toUpperCase() + theme.slice(1);
+  };
+
   return (
     <button className="theme-toggle" onClick={cycleTheme} aria-label="Toggle theme" title={`Current: ${theme}`}>
-      {getIcon()}
+      <span className="theme-name">{getThemeLabel()}</span>
+      <span className="theme-icon">{getIcon()}</span>
     </button>
   );
 }
