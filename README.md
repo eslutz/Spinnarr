@@ -20,13 +20,19 @@ A modern web application for randomly selecting items from multiple spinners. Pe
 ### Running Locally
 
 1. Clone the repository
-2. Install dependencies:
+2. Use Node.js `22.12.0` (or newer v22):
+
+   ```bash
+   nvm use
+   ```
+
+3. Install dependencies:
 
    ```bash
    npm install
    ```
 
-3. Start the development server:
+4. Start the development server:
 
    ```bash
    npm run dev
@@ -62,6 +68,20 @@ To preview the production build:
 
 ```bash
 npm run preview
+```
+
+## Linting & Type Safety
+
+Run TypeScript + ESLint checks:
+
+```bash
+npm run lint
+```
+
+Auto-fix lint issues where possible:
+
+```bash
+npm run lint:fix
 ```
 
 ## JSON File Format
@@ -145,7 +165,9 @@ The app uses the `navigator.vibrate()` API to provide tactile feedback.
 ## Technologies
 
 - React 19
+- TypeScript
 - Vite 7
+- ESLint 9 + `typescript-eslint`
 - Modern CSS with CSS Variables
 - Theme switching (Light/Dark/System)
 - SVG-based wheel rendering
@@ -156,13 +178,14 @@ The app uses the `navigator.vibrate()` API to provide tactile feedback.
 
 ```txt
 src/
-  ├── App.jsx                 # Main application component
-  ├── main.jsx               # Application entry point
+  ├── App.tsx                # Main application component
+  ├── main.tsx               # Application entry point
   ├── components/
-  │   ├── FileUpload.jsx     # Drag & drop file upload
-  │   ├── Header.jsx         # Header with theme toggle
-  │   ├── Spinner.jsx        # Spinning wheel component
-  │   └── ThemeToggle.jsx    # Theme switcher
+  │   ├── FileUpload.tsx     # Drag & drop file upload
+  │   ├── Header.tsx         # Header with theme toggle
+  │   ├── Spinner.tsx        # Spinning wheel component
+  │   └── ThemeToggle.tsx    # Theme switcher
+  ├── types.ts               # Shared application types
   └── styles/
       ├── App.css            # Component styles
       └── index.css          # Global styles and theme variables

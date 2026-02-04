@@ -1,6 +1,14 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import { triggerHaptic } from "../utils/haptics";
 
+interface SpinnerProps {
+  items: string[];
+  onSpinComplete?: (result: string) => void;
+  onSpinStart?: () => void;
+  onSpinEnd?: () => void;
+  children?: React.ReactNode;
+}
+
 const MuteIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -39,41 +47,115 @@ const UnmuteIcon = () => (
   </svg>
 );
 
-function Spinner({ items, onSpinComplete, onSpinStart, onSpinEnd, children }) {
+const hslToRgb = (h: number, s: number, l: number): [number, number, number] => {
+  s /= 100;
+  l /= 100;
+  const k = (n: number) => (n + h / 30) % 12;
+  const a = s * Math.min(l, 1 - l);
+  const f = (n: number) => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+  return [Math.round(255 * f(0)), Math.round(255 * f(8)), Math.round(255 * f(4))];
+};
+
+const getLuminance = (r: number, g: number, b: number) => {
+  const toRelative = (channel: number) => {
+    const scaled = channel / 255;
+    return scaled <= 0.03928 ? scaled / 12.92 : Math.pow((scaled + 0.055) / 1.055, 2.4);
+  };
+
+  const rs = toRelative(r);
+  const gs = toRelative(g);
+  const bs = toRelative(b);
+
+  return 0.2126 * rs + 0.7152 * gs + 0.0722 * bs;
+};
+
+const getContrastRatio = (rgb1: [number, number, number], rgb2: [number, number, number]) => {
+  const lum1 = getLuminance(...rgb1);
+  const lum2 = getLuminance(...rgb2);
+  const lighter = Math.max(lum1, lum2);
+  const darker = Math.min(lum1, lum2);
+  return (lighter + 0.05) / (darker + 0.05);
+};
+
+const meetsContrastRequirement = (
+  bgColor: [number, number, number],
+  textColor: [number, number, number] = [0, 0, 0],
+) => {
+  const ratio = getContrastRatio(bgColor, textColor);
+  return ratio >= 4.5;
+};
+
+const generateColors = (count: number): string[] => {
+  const colors: string[] = [];
+  const maxAttempts = 10;
+
+  for (let i = 0; i < count; i++) {
+    const baseHue = (i * 360) / count;
+    let saturation;
+    let lightness;
+    let hslColor: string | undefined;
+    let rgbColor: [number, number, number] | undefined;
+    let attempts = 0;
+    let validColor = false;
+
+    while (!validColor && attempts < maxAttempts) {
+      saturation = 60 + Math.random() * 20;
+      lightness = 70 + Math.random() * 15;
+      rgbColor = hslToRgb(baseHue, saturation, lightness);
+
+      if (meetsContrastRequirement(rgbColor, [0, 0, 0])) {
+        validColor = true;
+        hslColor = `hsl(${baseHue}, ${saturation}%, ${lightness}%)`;
+      } else {
+        lightness = Math.max(65, lightness - 5);
+      }
+
+      attempts++;
+    }
+
+    if (!validColor) {
+      lightness = 75;
+      saturation = 70;
+      hslColor = `hsl(${baseHue}, ${saturation}%, ${lightness}%)`;
+    }
+
+    colors.push(hslColor ?? `hsl(${baseHue}, 70%, 75%)`);
+  }
+
+  return colors;
+};
+
+function Spinner({ items, onSpinComplete, onSpinStart, onSpinEnd, children }: SpinnerProps) {
   const [spinning, setSpinning] = useState(false);
   const [rotation, setRotation] = useState(0);
-  const [result, setResult] = useState(null);
+  const [result, setResult] = useState<string | null>(null);
   const [muted, setMuted] = useState(true);
-  const wheelRef = useRef(null);
-  const animationRef = useRef(null);
-  const audioContextRef = useRef(null);
-  const audioBufferRef = useRef(null); // To store the "click" buffer
+  const wheelRef = useRef<SVGSVGElement>(null);
+  const animationRef = useRef<number | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const audioBufferRef = useRef<AudioBuffer | null>(null);
+  const spinRef = useRef<() => void>(() => undefined);
 
   // Initialize AudioContext and Create Click Buffer on Mount
   useEffect(() => {
     try {
-      const AudioContext = window.AudioContext || window.webkitAudioContext;
-      if (!AudioContext) return;
-
       const ctx = new AudioContext();
       audioContextRef.current = ctx;
 
       // Create a "white noise" buffer for a mechanical click sound
-      // This is more realistic than a sine wave oscillator
       const bufferSize = ctx.sampleRate * 0.005; // 5ms click (very short)
       const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
       const data = buffer.getChannelData(0);
 
       for (let i = 0; i < bufferSize; i++) {
         // White noise with exponential decay
-        // This generates a "snap" sound similar to a plastic card hitting a spoke
         data[i] = (Math.random() * 2 - 1) * Math.exp((-3 * i) / bufferSize);
       }
       audioBufferRef.current = buffer;
 
       return () => {
         if (ctx.state !== "closed") {
-          ctx.close();
+          void ctx.close();
         }
       };
     } catch (e) {
@@ -87,10 +169,10 @@ function Spinner({ items, onSpinComplete, onSpinStart, onSpinEnd, children }) {
   }, [items]);
 
   useEffect(() => {
-    const handleKeyPress = (event) => {
+    const handleKeyPress = (event: KeyboardEvent) => {
       if (event.code === "Space" && !spinning && items.length > 0) {
         event.preventDefault();
-        spin();
+        spinRef.current();
       }
     };
 
@@ -99,83 +181,6 @@ function Spinner({ items, onSpinComplete, onSpinStart, onSpinEnd, children }) {
       window.removeEventListener("keydown", handleKeyPress);
     };
   }, [spinning, items.length]);
-
-  // Convert HSL to RGB
-  const hslToRgb = (h, s, l) => {
-    s /= 100;
-    l /= 100;
-    const k = (n) => (n + h / 30) % 12;
-    const a = s * Math.min(l, 1 - l);
-    const f = (n) => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
-    return [Math.round(255 * f(0)), Math.round(255 * f(8)), Math.round(255 * f(4))];
-  };
-
-  // Calculate relative luminance
-  const getLuminance = (r, g, b) => {
-    const [rs, gs, bs] = [r, g, b].map((c) => {
-      c /= 255;
-      return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
-    });
-    return 0.2126 * rs + 0.7152 * gs + 0.0722 * bs;
-  };
-
-  // Calculate contrast ratio
-  const getContrastRatio = (rgb1, rgb2) => {
-    const lum1 = getLuminance(...rgb1);
-    const lum2 = getLuminance(...rgb2);
-    const lighter = Math.max(lum1, lum2);
-    const darker = Math.min(lum1, lum2);
-    return (lighter + 0.05) / (darker + 0.05);
-  };
-
-  // Check if contrast meets WCAG AA standard (4.5:1 for normal text)
-  const meetsContrastRequirement = (bgColor, textColor = [0, 0, 0]) => {
-    const ratio = getContrastRatio(bgColor, textColor);
-    return ratio >= 4.5; // WCAG AA standard
-  };
-
-  // Generate dynamic colors with accessibility checks
-  const generateColors = (count) => {
-    const colors = [];
-    const maxAttempts = 10; // Max attempts per color to find accessible option
-
-    for (let i = 0; i < count; i++) {
-      const baseHue = (i * 360) / count;
-      let saturation, lightness, hslColor, rgbColor;
-      let attempts = 0;
-      let validColor = false;
-
-      // Try to find a color that meets contrast requirements
-      while (!validColor && attempts < maxAttempts) {
-        saturation = 60 + Math.random() * 20; // 60-80%
-        lightness = 70 + Math.random() * 15; // 70-85%
-
-        rgbColor = hslToRgb(baseHue, saturation, lightness);
-
-        // Check contrast with black text
-        if (meetsContrastRequirement(rgbColor)) {
-          validColor = true;
-          hslColor = `hsl(${baseHue}, ${saturation}%, ${lightness}%)`;
-        } else {
-          // Adjust lightness to improve contrast
-          lightness = Math.max(65, lightness - 5);
-        }
-
-        attempts++;
-      }
-
-      // Fallback: if no valid color found, use a safe default
-      if (!validColor) {
-        lightness = 75;
-        saturation = 70;
-        hslColor = `hsl(${baseHue}, ${saturation}%, ${lightness}%)`;
-      }
-
-      colors.push(hslColor);
-    }
-
-    return colors;
-  };
 
   const colors = useMemo(() => generateColors(items.length), [items.length]);
   const segmentAngle = 360 / items.length;
@@ -211,7 +216,7 @@ function Spinner({ items, onSpinComplete, onSpinStart, onSpinEnd, children }) {
 
     return {
       pathData,
-      color: colors[index],
+      color: colors[index] ?? "#d1d5db",
       text: item,
       textX,
       textY,
@@ -241,7 +246,6 @@ function Spinner({ items, onSpinComplete, onSpinStart, onSpinEnd, children }) {
     const totalChange = spins * 360 + extraDegrees;
 
     const startRotation = rotation;
-    const endRotation = startRotation + totalChange;
     const duration = 5000;
     const startTime = performance.now();
 
@@ -249,14 +253,13 @@ function Spinner({ items, onSpinComplete, onSpinStart, onSpinEnd, children }) {
     // The CSS equivalent was cubic-bezier(0.17, 0.67, 0.3, 1)
     // We'll use a standard easeOutQuart or similar for JS animation
     // t is 0-1
-    const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
-    const easeOutQuart = (t) => 1 - Math.pow(1 - t, 4);
+    const easeOutQuart = (t: number) => 1 - Math.pow(1 - t, 4);
 
     // Track the last "tick" angle to know when we cross a boundary
     const segmentAngle = 360 / items.length;
     let lastAngle = startRotation;
 
-    const animate = (currentTime) => {
+    const animate = (currentTime: number) => {
       const elapsed = currentTime - startTime;
       const progress = Math.min(elapsed / duration, 1);
 
@@ -268,7 +271,6 @@ function Spinner({ items, onSpinComplete, onSpinStart, onSpinEnd, children }) {
 
       // Check for ticks
       // We play a tick every time we cross a multiple of segmentAngle
-      const currentAngleNormalized = currentRotation % 360; // Just for debugging logic if needed
 
       // Calculate how many segments we've passed since last frame
       const lastSegmentIndex = Math.floor(lastAngle / segmentAngle);
@@ -287,17 +289,21 @@ function Spinner({ items, onSpinComplete, onSpinStart, onSpinEnd, children }) {
         // Calculate result based on final angle
         const finalNormalized = (360 - (currentRotation % 360)) % 360;
         const selectedIndex = Math.floor(finalNormalized / segmentAngle) % items.length;
-        setResult(items[selectedIndex]);
+        const selectedItem = items[selectedIndex];
+        if (!selectedItem) {
+          if (onSpinEnd) onSpinEnd();
+          return;
+        }
+
+        setResult(selectedItem);
 
         if (onSpinEnd) onSpinEnd();
-        if (onSpinComplete) onSpinComplete(items[selectedIndex]);
+        if (onSpinComplete) onSpinComplete(selectedItem);
       }
     };
 
     animationRef.current = requestAnimationFrame(animate);
   };
-
-  // Touch interaction removed; desktop and mobile use the spin button
 
   // Improved tick sound using Web Audio API Buffer
   // Plays a pre-generated noise burst for zero latency
@@ -310,7 +316,7 @@ function Spinner({ items, onSpinComplete, onSpinStart, onSpinEnd, children }) {
 
       // Resume context if suspended (browser autoplay policy)
       if (ctx.state === "suspended") {
-        ctx.resume();
+        void ctx.resume();
       }
 
       const source = ctx.createBufferSource();
@@ -327,10 +333,12 @@ function Spinner({ items, onSpinComplete, onSpinStart, onSpinEnd, children }) {
       gainNode.connect(ctx.destination);
 
       source.start(0);
-    } catch (e) {
+    } catch {
       // ignore audio errors
     }
   };
+
+  spinRef.current = spin;
 
   return (
     <div className="spinner-container">

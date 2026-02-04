@@ -1,13 +1,15 @@
 import { useState, useEffect } from "react";
+import type { Theme } from "../types";
+import { isTheme } from "../utils/validation";
 
 function ThemeToggle() {
-  const [theme, setTheme] = useState(() => {
+  const [theme, setTheme] = useState<Theme>(() => {
     const saved = localStorage.getItem("theme");
-    return saved || "system";
+    return saved && isTheme(saved) ? saved : "system";
   });
 
   useEffect(() => {
-    const applyTheme = (newTheme) => {
+    const applyTheme = (newTheme: Theme) => {
       if (newTheme === "system") {
         const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
         document.documentElement.setAttribute("data-theme", systemTheme);
@@ -23,14 +25,16 @@ function ThemeToggle() {
       const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
       const handleChange = () => applyTheme("system");
       mediaQuery.addEventListener("change", handleChange);
-      return () => mediaQuery.removeEventListener("change", handleChange);
+      return () => {
+        mediaQuery.removeEventListener("change", handleChange);
+      };
     }
   }, [theme]);
 
   const cycleTheme = () => {
-    const themes = ["light", "dark", "system"];
+    const themes: Theme[] = ["light", "dark", "system"];
     const currentIndex = themes.indexOf(theme);
-    const nextTheme = themes[(currentIndex + 1) % themes.length];
+    const nextTheme = themes[(currentIndex + 1) % themes.length] ?? "system";
     setTheme(nextTheme);
   };
 

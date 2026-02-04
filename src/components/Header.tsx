@@ -1,14 +1,20 @@
 import { useState, useRef, useEffect } from "react";
 import ThemeToggle from "./ThemeToggle";
 
-function Header({ fileName, onReset, showControls }) {
+interface HeaderProps {
+  fileName: string;
+  onReset: () => void;
+  showControls: boolean;
+}
+
+function Header({ fileName, onReset, showControls }: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const menuRef = useRef(null);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   // Close menu when clicking outside
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (menuRef.current && !menuRef.current.contains(event.target)) {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (event.target instanceof Node && menuRef.current && !menuRef.current.contains(event.target)) {
         setIsMenuOpen(false);
       }
     };
@@ -30,7 +36,9 @@ function Header({ fileName, onReset, showControls }) {
         <div className="header-menu-container" ref={menuRef}>
           <button
             className={`menu-button ${isMenuOpen ? "is-open" : ""}`}
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            onClick={() => {
+              setIsMenuOpen((open) => !open);
+            }}
             aria-label={isMenuOpen ? "Close menu" : "Open menu"}
           >
             <div className="icon-container">

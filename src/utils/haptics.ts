@@ -1,10 +1,12 @@
-export const triggerHaptic = (type = "medium") => {
+import type { HapticType } from "../types";
+
+export const triggerHaptic = (type: HapticType = "medium"): void => {
   // Check if Vibration API is supported
   if (typeof navigator === "undefined" || typeof navigator.vibrate !== "function") {
     return;
   }
 
-  const patterns = {
+  const patterns: Record<HapticType, number | number[]> = {
     tick: 5, // Extremely short, sharp (for wheel ticks)
     soft: 10, // Subtle feedback (toggles)
     medium: 40, // Standard button press
@@ -14,7 +16,7 @@ export const triggerHaptic = (type = "medium") => {
 
   try {
     navigator.vibrate(patterns[type] || patterns.medium);
-  } catch (e) {
+  } catch {
     // Ignore errors (some browsers might block it)
   }
 };
