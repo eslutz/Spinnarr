@@ -242,7 +242,31 @@ function Spinner({ items, onSpinComplete, onSpinStart, onSpinEnd, children }: Sp
 
     // Random number of full rotations (5-8) plus random angle
     const spins = 5 + Math.floor(Math.random() * 4);
-    const extraDegrees = Math.floor(Math.random() * 360);
+    let extraDegrees = Math.floor(Math.random() * 360);
+
+    // Ensure we don't land on the divider
+    {
+      const targetRotation = rotation + spins * 360 + extraDegrees;
+      const finalNormalized = (360 - (targetRotation % 360)) % 360;
+
+      const pos = finalNormalized / segmentAngle;
+      const nearestDividerIndex = Math.round(pos);
+      const nearestDividerAngle = nearestDividerIndex * segmentAngle;
+      const dist = Math.abs(finalNormalized - nearestDividerAngle);
+
+      // If we are within 2 degrees of a divider (visual overlap)
+      if (dist < 2) {
+        // Randomly pick which side of the divider to land on
+        const randomSign = Math.random() < 0.5 ? 1 : -1;
+        // Target an angle that is strictly 2.5 degrees away from the boundary
+        const targetFinal = nearestDividerAngle + randomSign * 2.5;
+
+        // Adjust extraDegrees to hit the target
+        // (finalNormalized increases when extraDegrees decreases)
+        extraDegrees -= targetFinal - finalNormalized;
+      }
+    }
+
     const totalChange = spins * 360 + extraDegrees;
 
     const startRotation = rotation;
