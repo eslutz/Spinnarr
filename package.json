@@ -10,7 +10,7 @@
     "lint": "npm run typecheck && eslint . --max-warnings 0",
     "lint:fix": "eslint . --fix",
     "test": "vitest run",
-    "preview": "vite preview"
+    "preview": "vite build && vite preview"
   },
   "engines": {
     "node": ">=22.12.0 <23"

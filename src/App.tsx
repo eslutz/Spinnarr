@@ -18,6 +18,7 @@ function App() {
   const [results, setResults] = useState<Record<number, string>>({});
   const [showResults, setShowResults] = useState(false);
   const [isSpinning, setIsSpinning] = useState(false);
+  const [muted, setMuted] = useState(true);
 
   const resetCollection = useCallback(() => {
     setSpinners([]);
@@ -28,6 +29,7 @@ function App() {
     setResults({});
     setShowResults(false);
     setIsSpinning(false);
+    setMuted(true);
   }, []);
 
   const handleFileLoad = useCallback((data: unknown, sourceFileName: string = UPLOAD_FILE_LABEL): boolean => {
@@ -156,11 +158,12 @@ function App() {
             <div className="spinner-wrapper">
               <h2 className="spinner-title">{currentSpinner.name}</h2>
               <Spinner
-                key={`${currentSpinnerIndex}-${currentSpinner.name}`}
                 items={currentSpinner.items}
                 onSpinComplete={handleSpinComplete}
                 onSpinStart={handleSpinStart}
                 onSpinEnd={handleSpinEnd}
+                muted={muted}
+                onMutedChange={setMuted}
               >
                 <div className="navigation-buttons">
                   <button

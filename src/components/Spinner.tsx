@@ -8,6 +8,8 @@ interface SpinnerProps {
   onSpinComplete?: (result: string) => void;
   onSpinStart?: () => void;
   onSpinEnd?: () => void;
+  muted: boolean;
+  onMutedChange: (muted: boolean) => void;
   children?: ReactNode;
 }
 
@@ -53,11 +55,10 @@ const UnmuteIcon = () => (
   </svg>
 );
 
-function Spinner({ items, onSpinComplete, onSpinStart, onSpinEnd, children }: SpinnerProps) {
+function Spinner({ items, onSpinComplete, onSpinStart, onSpinEnd, muted, onMutedChange, children }: SpinnerProps) {
   const [spinning, setSpinning] = useState(false);
   const [rotation, setRotation] = useState(0);
   const [result, setResult] = useState<string | null>(null);
-  const [muted, setMuted] = useState(true);
   const animationRef = useRef<number | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const audioBufferRef = useRef<AudioBuffer | null>(null);
@@ -264,7 +265,7 @@ function Spinner({ items, onSpinComplete, onSpinStart, onSpinEnd, children }: Sp
         className={`mute-toggle ${muted ? "active" : ""}`}
         onClick={() => {
           triggerHaptic("soft");
-          setMuted((m) => !m);
+          onMutedChange(!muted);
         }}
         type="button"
         aria-pressed={muted}
