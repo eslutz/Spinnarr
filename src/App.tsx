@@ -1,10 +1,13 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Header from "./components/Header";
 import FileUpload from "./components/FileUpload";
 import Spinner from "./components/Spinner";
 import type { SpinnerConfig } from "./types";
 import { isCollectionConfig } from "./utils/validation";
 import "./styles/App.css";
+
+const DEFAULT_FILE_LABEL = "Default Configuration";
+const UPLOAD_FILE_LABEL = "Uploaded file";
 
 function App() {
   const [spinners, setSpinners] = useState<SpinnerConfig[]>([]);
@@ -16,43 +19,7 @@ function App() {
   const [showResults, setShowResults] = useState(false);
   const [isSpinning, setIsSpinning] = useState(false);
 
-  function handleFileLoad(data: unknown): boolean {
-    if (!isCollectionConfig(data)) {
-      alert('JSON must contain a "spinners" array property. See schema.json for format.');
-      return false;
-    }
-
-    setSpinners(data.spinners);
-    setCurrentSpinnerIndex(0);
-    setFileName("Uploaded file");
-    setHasResult(false);
-    setCollectionTitle(data.title ?? "");
-    setResults({});
-    setShowResults(false);
-
-    return true;
-  }
-
-  useEffect(() => {
-    const defaultFile = import.meta.env.VITE_DEFAULT_SPINNER_FILE;
-    if (defaultFile) {
-      fetch(defaultFile)
-        .then((response) => {
-          if (!response.ok) throw new Error("Failed to load default configuration");
-          return response.json() as Promise<unknown>;
-        })
-        .then((data: unknown) => {
-          if (handleFileLoad(data)) {
-            setFileName("Default Configuration");
-          }
-        })
-        .catch((error: unknown) => {
-          console.error("Error loading default file:", error);
-        });
-    }
-  }, []);
-
-  const handleReset = () => {
+  const resetCollection = useCallback(() => {
     setSpinners([]);
     setCurrentSpinnerIndex(0);
     setFileName("");
@@ -60,92 +27,151 @@ function App() {
     setCollectionTitle("");
     setResults({});
     setShowResults(false);
-  };
+    setIsSpinning(false);
+  }, []);
 
-  const handleNext = () => {
+  const handleFileLoad = useCallback((data: unknown, sourceFileName: string = UPLOAD_FILE_LABEL): boolean => {
+    if (!isCollectionConfig(data)) {
+      alert('JSON must include a non-empty "spinners" array with non-empty names/items. See schema.json for format.');
+      return false;
+    }
+
+    setSpinners(data.spinners);
+    setCurrentSpinnerIndex(0);
+    setFileName(sourceFileName || UPLOAD_FILE_LABEL);
+    setHasResult(false);
+    setCollectionTitle(data.title ?? "");
+    setResults({});
+    setShowResults(false);
+    setIsSpinning(false);
+
+    return true;
+  }, []);
+
+  useEffect(() => {
+    const defaultFile = import.meta.env.VITE_DEFAULT_SPINNER_FILE;
+    if (!defaultFile) {
+      return;
+    }
+
+    const abortController = new AbortController();
+
+    const loadDefaultFile = async () => {
+      try {
+        const response = await fetch(defaultFile, { signal: abortController.signal });
+        if (!response.ok) {
+          throw new Error("Failed to load default configuration");
+        }
+
+        const data = (await response.json()) as unknown;
+        handleFileLoad(data, DEFAULT_FILE_LABEL);
+      } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") {
+          return;
+        }
+        console.error("Error loading default file:", error);
+      }
+    };
+
+    void loadDefaultFile();
+
+    return () => {
+      abortController.abort();
+    };
+  }, [handleFileLoad]);
+
+  const handleNext = useCallback(() => {
     if (currentSpinnerIndex === spinners.length - 1) {
-      // On last spinner, show results page
       setShowResults(true);
     } else if (currentSpinnerIndex < spinners.length - 1) {
-      setCurrentSpinnerIndex(currentSpinnerIndex + 1);
+      setCurrentSpinnerIndex((prevIndex) => prevIndex + 1);
       setHasResult(false);
     }
-  };
+  }, [currentSpinnerIndex, spinners.length]);
 
-  const handlePrevious = () => {
+  const handlePrevious = useCallback(() => {
     if (currentSpinnerIndex > 0) {
-      setCurrentSpinnerIndex(currentSpinnerIndex - 1);
+      setCurrentSpinnerIndex((prevIndex) => prevIndex - 1);
       setHasResult(false);
     }
-  };
+  }, [currentSpinnerIndex]);
 
-  const handleSpinComplete = (result: string) => {
+  const handleSpinComplete = useCallback((result: string) => {
     setHasResult(true);
     setResults((prev) => ({
       ...prev,
       [currentSpinnerIndex]: result,
     }));
-  };
+  }, [currentSpinnerIndex]);
 
-  const handleSpinStart = () => {
+  const handleSpinStart = useCallback(() => {
     setIsSpinning(true);
     setHasResult(false);
-  };
+  }, []);
 
-  const handleSpinEnd = () => {
+  const handleSpinEnd = useCallback(() => {
     setIsSpinning(false);
-  };
+  }, []);
 
-  const handleBackToSpinners = () => {
+  const handleBackToSpinners = useCallback(() => {
     setShowResults(false);
-  };
+  }, []);
 
   const hasSpinners = spinners.length > 0;
-  const currentSpinner = hasSpinners ? spinners[currentSpinnerIndex] : undefined;
+  const currentSpinner = useMemo(
+    () => (hasSpinners ? spinners[currentSpinnerIndex] : undefined),
+    [currentSpinnerIndex, hasSpinners, spinners],
+  );
 
   return (
     <div className="app">
-      <Header fileName={fileName} onReset={handleReset} showControls={hasSpinners} />
+      <Header fileName={fileName} onReset={resetCollection} showControls={hasSpinners} />
       <main className="main-content">
         {!hasSpinners ? (
           <FileUpload onFileLoad={handleFileLoad} />
         ) : showResults ? (
           <div className="results-page">
-            <h1 className="results-title">{collectionTitle ?? "Results"}</h1>
-            <div className="results-list">
+            <h1 className="results-title">{collectionTitle || "Results"}</h1>
+            <dl className="results-list">
               {spinners.map((spinner, index) => (
                 <div key={index} className="result-item">
-                  <div className="result-label">{spinner.name}:</div>
-                  <div className="result-value">{results[index] ?? "Not spun"}</div>
+                  <dt className="result-label">{spinner.name}</dt>
+                  <dd className="result-value">{results[index] ?? "Not spun"}</dd>
                 </div>
               ))}
-            </div>
+            </dl>
             <div className="results-actions">
-              <button className="nav-button" onClick={handleBackToSpinners}>
+              <button className="nav-button" onClick={handleBackToSpinners} type="button">
                 ← Back to Spinners
               </button>
-              <button className="nav-button" onClick={handleReset}>
+              <button className="nav-button" onClick={resetCollection} type="button">
                 Start Over
               </button>
             </div>
           </div>
         ) : currentSpinner ? (
           <div className="spinner-section">
-            {collectionTitle && <h1 className="collection-title">{collectionTitle}</h1>}
+            <h1 className="collection-title">{collectionTitle || "Spinner Collection"}</h1>
 
             <div className="spinner-wrapper">
               <h2 className="spinner-title">{currentSpinner.name}</h2>
               <Spinner
+                key={`${currentSpinnerIndex}-${currentSpinner.name}`}
                 items={currentSpinner.items}
                 onSpinComplete={handleSpinComplete}
                 onSpinStart={handleSpinStart}
                 onSpinEnd={handleSpinEnd}
               >
                 <div className="navigation-buttons">
-                  <button className="nav-button" onClick={handlePrevious} disabled={currentSpinnerIndex === 0}>
+                  <button
+                    className="nav-button"
+                    onClick={handlePrevious}
+                    disabled={currentSpinnerIndex === 0}
+                    type="button"
+                  >
                     ← Previous
                   </button>
-                  <button className="nav-button" onClick={handleNext} disabled={!hasResult || isSpinning}>
+                  <button className="nav-button" onClick={handleNext} disabled={!hasResult || isSpinning} type="button">
                     {currentSpinnerIndex === spinners.length - 1 ? "View Results →" : "Next →"}
                   </button>
                 </div>

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import ThemeToggle from "./ThemeToggle";
 
 interface HeaderProps {
@@ -10,18 +10,26 @@ interface HeaderProps {
 function Header({ fileName, onReset, showControls }: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const menuId = useId();
 
-  // Close menu when clicking outside
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
+    const handleClickOutside = (event: PointerEvent) => {
       if (event.target instanceof Node && menuRef.current && !menuRef.current.contains(event.target)) {
         setIsMenuOpen(false);
       }
     };
 
-    document.addEventListener("mousedown", handleClickOutside);
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("pointerdown", handleClickOutside);
+    document.addEventListener("keydown", handleEscape);
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("pointerdown", handleClickOutside);
+      document.removeEventListener("keydown", handleEscape);
     };
   }, []);
 
@@ -29,17 +37,21 @@ function Header({ fileName, onReset, showControls }: HeaderProps) {
     <header className="header">
       <div className="header-content">
         <div className="header-titles">
-          <h1 className="logo">Spinnarr</h1>
+          <p className="logo">Spinnarr</p>
           <p className="tagline">Spin to pick something at random</p>
         </div>
 
         <div className="header-menu-container" ref={menuRef}>
           <button
             className={`menu-button ${isMenuOpen ? "is-open" : ""}`}
+            type="button"
             onClick={() => {
               setIsMenuOpen((open) => !open);
             }}
             aria-label={isMenuOpen ? "Close menu" : "Open menu"}
+            aria-expanded={isMenuOpen}
+            aria-controls={menuId}
+            aria-haspopup="menu"
           >
             <div className="icon-container">
               <svg
@@ -49,6 +61,8 @@ function Header({ fileName, onReset, showControls }: HeaderProps) {
                 fill="currentColor"
                 width="24"
                 height="24"
+                aria-hidden="true"
+                focusable="false"
               >
                 <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" />
               </svg>
@@ -59,6 +73,8 @@ function Header({ fileName, onReset, showControls }: HeaderProps) {
                 fill="currentColor"
                 width="24"
                 height="24"
+                aria-hidden="true"
+                focusable="false"
               >
                 <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
               </svg>
@@ -66,7 +82,7 @@ function Header({ fileName, onReset, showControls }: HeaderProps) {
           </button>
 
           {isMenuOpen && (
-            <div className="menu-dropdown">
+            <div className="menu-dropdown" id={menuId} aria-label="Application menu">
               {showControls && (
                 <>
                   <div className="menu-item file-info">
@@ -78,6 +94,7 @@ function Header({ fileName, onReset, showControls }: HeaderProps) {
                   <div className="menu-item">
                     <button
                       className="menu-action-button"
+                      type="button"
                       onClick={() => {
                         onReset();
                         setIsMenuOpen(false);

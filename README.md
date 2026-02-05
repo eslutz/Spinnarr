@@ -70,6 +70,12 @@ To preview the production build:
 npm run preview
 ```
 
+Run tests:
+
+```bash
+npm run test
+```
+
 ## Linting & Type Safety
 
 Run TypeScript + ESLint checks:
@@ -123,7 +129,7 @@ The app validates uploaded JSON files against [schema.json](schema.json). Invali
 
 ### Example
 
-See [public/minecraftSpinnerOptions.json](public/minecraftSpinnerOptions.json) for a complete example with 14 different spinners for generating random Minecraft house builds.
+See [public/Minecraft-House-Builder.json](public/Minecraft-House-Builder.json) for a complete example with 14 different spinners for generating random Minecraft house builds.
 
 ## How It Works
 
@@ -140,7 +146,7 @@ See [public/minecraftSpinnerOptions.json](public/minecraftSpinnerOptions.json) f
 Set `VITE_DEFAULT_SPINNER_FILE` in [.env](.env) to specify a default JSON file to load on startup:
 
 ```env
-VITE_DEFAULT_SPINNER_FILE=/minecraftSpinnerOptions.json
+VITE_DEFAULT_SPINNER_FILE=/Minecraft-House-Builder.json
 ```
 
 ## Audio & Haptics
@@ -190,7 +196,7 @@ src/
       ├── App.css            # Component styles
       └── index.css          # Global styles and theme variables
 public/
-  └── minecraftSpinnerOptions.json  # Example spinner configuration
+  └── Minecraft-House-Builder.json  # Example spinner configuration
 schema.json                  # JSON schema for validation
 ```
 

@@ -1,22 +1,21 @@
 import type { HapticType } from "../types";
 
+const HAPTIC_PATTERNS: Record<HapticType, number | number[]> = {
+  tick: 5,
+  soft: 10,
+  medium: 40,
+  heavy: 70,
+  success: [50, 50, 50],
+};
+
 export const triggerHaptic = (type: HapticType = "medium"): void => {
-  // Check if Vibration API is supported
   if (typeof navigator === "undefined" || typeof navigator.vibrate !== "function") {
     return;
   }
 
-  const patterns: Record<HapticType, number | number[]> = {
-    tick: 5, // Extremely short, sharp (for wheel ticks)
-    soft: 10, // Subtle feedback (toggles)
-    medium: 40, // Standard button press
-    heavy: 70, // High impact
-    success: [50, 50, 50], // Double-tap pulse
-  };
-
   try {
-    navigator.vibrate(patterns[type] || patterns.medium);
+    navigator.vibrate(HAPTIC_PATTERNS[type]);
   } catch {
-    // Ignore errors (some browsers might block it)
+    // Ignore browsers that block the vibration API.
   }
 };
