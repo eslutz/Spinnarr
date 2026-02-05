@@ -38,7 +38,7 @@ A modern web application for randomly selecting items from multiple spinners. Pe
    npm run dev
    ```
 
-4. Open your browser to `http://localhost:5173`
+5. Open your browser to `http://localhost:5173`
 
 ### Running with Docker
 
@@ -198,13 +198,85 @@ src/
 public/
   └── Minecraft-House-Builder.json  # Example spinner configuration
 schema.json                  # JSON schema for validation
+
+## Contributing
+
+Contributions are welcome! Please follow these guidelines when submitting changes.
+
+### Building from Source
+
+```bash
+# Clone the repository
+git clone https://github.com/eslutz/spinnarr.git
+cd spinnarr
+
+# Install dependencies
+npm install
+
+# Run development server
+npm run dev
+
+# Build for production
+npm run build
 ```
 
-## Browser Support
+### Development
 
-Works on all modern browsers that support:
+```bash
+# Run tests
+npm run test
 
-- ES6+ JavaScript
-- CSS Variables
-- SVG
-- CSS Grid and Flexbox
+# Run linter
+npm run lint
+
+# Auto-fix lint issues
+npm run lint:fix
+
+# Run locally with Node.js 22.12.0+
+nvm use
+npm run dev
+```
+
+Before submitting a pull request:
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests if applicable
+5. Run linters and tests
+6. Submit a pull request
+
+See our [Pull Request Template](.github/PULL_REQUEST_TEMPLATE.md) for more details.
+
+## Security
+
+Security is a top priority for this project. If you discover a security vulnerability, please follow responsible disclosure practices.
+
+**Reporting Vulnerabilities:**
+
+Please report security vulnerabilities through GitHub Security Advisories:
+<https://github.com/eslutz/spinnarr/security/advisories/new>
+
+Alternatively, you can view our [Security Policy](.github/SECURITY.md) for additional contact methods and guidelines.
+
+**Security Best Practices:**
+
+- Keep your installation up to date with the latest releases
+- Be cautious when uploading JSON files from untrusted sources
+- Review JSON file contents before loading
+- Use HTTPS for production deployments
+- Regularly monitor logs for suspicious activity
+
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+
+You are free to use, modify, and distribute this software under the terms of the MIT License.
+
+## Related Projects
+
+Other tools in the ecosystem:
+
+- **[Torarr](https://github.com/eslutz/torarr)** - Tor SOCKS proxy container for the *arr stack with health monitoring
+- **[Forwardarr](https://github.com/eslutz/forwardarr)** - Automatic port forwarding sync from Gluetun VPN to qBittorrent
+- **[Unpackarr](https://github.com/eslutz/unpackarr)** - Container-native archive extraction service for Sonarr, Radarr, and more

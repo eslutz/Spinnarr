@@ -1,0 +1,13 @@
+services:
+  spinnarr:
+    image: eslutz/spinnarr:latest
+    container_name: spinnarr
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    volumes:
+      # Mount custom spinner configuration (optional)
+      - ./spinners:/usr/share/nginx/html/public
+    environment:
+      # Optional environment variables
+      - TZ=America/New_York
