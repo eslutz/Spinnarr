@@ -11,7 +11,7 @@ interface SpinnerProps {
   muted: boolean;
   onMutedChange: (muted: boolean) => void;
   children?: ReactNode;
-  initialResult?: string;
+  initialResult?: string | undefined;
 }
 
 const MuteIcon = () => (
@@ -72,6 +72,10 @@ function Spinner({
   const animationRef = useRef<number | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const audioBufferRef = useRef<AudioBuffer | null>(null);
+
+  useEffect(() => {
+    setResult(initialResult ?? null);
+  }, [initialResult]);
 
   useEffect(() => {
     try {

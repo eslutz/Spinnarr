@@ -179,19 +179,19 @@ function App() {
     } else if (currentSpinnerIndex < spinners.length - 1) {
       const newIndex = currentSpinnerIndex + 1;
       setCurrentSpinnerIndex(newIndex);
-      setHasResult(false);
+      setHasResult(results[newIndex] !== undefined);
       pushHistoryState(newIndex, false);
     }
-  }, [currentSpinnerIndex, spinners.length, pushHistoryState]);
+  }, [currentSpinnerIndex, spinners.length, results, pushHistoryState]);
 
   const handlePrevious = useCallback(() => {
     if (currentSpinnerIndex > 0) {
       const newIndex = currentSpinnerIndex - 1;
       setCurrentSpinnerIndex(newIndex);
-      setHasResult(false);
+      setHasResult(results[newIndex] !== undefined);
       pushHistoryState(newIndex, false);
     }
-  }, [currentSpinnerIndex, pushHistoryState]);
+  }, [currentSpinnerIndex, results, pushHistoryState]);
 
   const handleSpinComplete = useCallback(
     (result: string) => {
@@ -219,6 +219,17 @@ function App() {
   }, [currentSpinnerIndex, pushHistoryState]);
 
   const hasSpinners = spinners.length > 0;
+
+  const handleLogoClick = useCallback(() => {
+    if (!hasSpinners) {
+      return;
+    }
+    setShowResults(false);
+    setCurrentSpinnerIndex(0);
+    setHasResult(results[0] !== undefined);
+    pushHistoryState(0, false);
+  }, [hasSpinners, results, pushHistoryState]);
+
   const currentSpinner = useMemo(
     () => (hasSpinners ? spinners[currentSpinnerIndex] : undefined),
     [currentSpinnerIndex, hasSpinners, spinners],
@@ -226,7 +237,7 @@ function App() {
 
   return (
     <div className="app">
-      <Header fileName={fileName} onReset={resetCollection} showControls={hasSpinners} />
+      <Header fileName={fileName} onReset={resetCollection} showControls={hasSpinners} onLogoClick={handleLogoClick} />
       <main className="main-content">
         {!hasSpinners ? (
           <FileUpload onFileLoad={handleFileLoad} />

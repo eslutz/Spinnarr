@@ -5,9 +5,10 @@ interface HeaderProps {
   fileName: string;
   onReset: () => void;
   showControls: boolean;
+  onLogoClick?: () => void;
 }
 
-function Header({ fileName, onReset, showControls }: HeaderProps) {
+function Header({ fileName, onReset, showControls, onLogoClick }: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const menuId = useId();
@@ -37,7 +38,9 @@ function Header({ fileName, onReset, showControls }: HeaderProps) {
     <header className="header">
       <div className="header-content">
         <div className="header-titles">
-          <p className="logo">Spinnarr</p>
+          <p className="logo" onClick={onLogoClick} style={{ cursor: onLogoClick ? "pointer" : "default" }}>
+            Spinnarr
+          </p>
           <p className="tagline">Spin to pick something at random</p>
         </div>
 
