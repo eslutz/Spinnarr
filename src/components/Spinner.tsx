@@ -11,6 +11,7 @@ interface SpinnerProps {
   muted: boolean;
   onMutedChange: (muted: boolean) => void;
   children?: ReactNode;
+  initialResult?: string;
 }
 
 const MuteIcon = () => (
@@ -55,10 +56,19 @@ const UnmuteIcon = () => (
   </svg>
 );
 
-function Spinner({ items, onSpinComplete, onSpinStart, onSpinEnd, muted, onMutedChange, children }: SpinnerProps) {
+function Spinner({
+  items,
+  onSpinComplete,
+  onSpinStart,
+  onSpinEnd,
+  muted,
+  onMutedChange,
+  children,
+  initialResult,
+}: SpinnerProps) {
   const [spinning, setSpinning] = useState(false);
   const [rotation, setRotation] = useState(0);
-  const [result, setResult] = useState<string | null>(null);
+  const [result, setResult] = useState<string | null>(initialResult ?? null);
   const animationRef = useRef<number | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const audioBufferRef = useRef<AudioBuffer | null>(null);

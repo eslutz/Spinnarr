@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Header from "./components/Header";
 import FileUpload from "./components/FileUpload";
 import Spinner from "./components/Spinner";
@@ -8,6 +8,11 @@ import "./styles/App.css";
 
 const DEFAULT_FILE_LABEL = "Default Configuration";
 const UPLOAD_FILE_LABEL = "Uploaded file";
+
+interface HistoryState {
+  spinnerIndex: number;
+  showResults: boolean;
+}
 
 function App() {
   const [spinners, setSpinners] = useState<SpinnerConfig[]>([]);
@@ -19,6 +24,23 @@ function App() {
   const [showResults, setShowResults] = useState(false);
   const [isSpinning, setIsSpinning] = useState(false);
   const [muted, setMuted] = useState(true);
+  const isRestoringFromHistory = useRef(false);
+
+  const pushHistoryState = useCallback((spinnerIndex: number, showResultsPage: boolean) => {
+    const state: HistoryState = {
+      spinnerIndex,
+      showResults: showResultsPage,
+    };
+    const url = new URL(window.location.href);
+    if (showResultsPage) {
+      url.searchParams.set("view", "results");
+      url.searchParams.delete("spinner");
+    } else {
+      url.searchParams.set("spinner", String(spinnerIndex + 1));
+      url.searchParams.delete("view");
+    }
+    window.history.pushState(state, "", url);
+  }, []);
 
   const resetCollection = useCallback(() => {
     setSpinners([]);
@@ -30,6 +52,10 @@ function App() {
     setShowResults(false);
     setIsSpinning(false);
     setMuted(true);
+    const url = new URL(window.location.href);
+    url.searchParams.delete("spinner");
+    url.searchParams.delete("view");
+    window.history.pushState(null, "", url);
   }, []);
 
   const handleFileLoad = useCallback((data: unknown, sourceFileName: string = UPLOAD_FILE_LABEL): boolean => {
@@ -82,29 +108,101 @@ function App() {
     };
   }, [handleFileLoad]);
 
+  useEffect(() => {
+    const handlePopState = (event: PopStateEvent) => {
+      const state = event.state as HistoryState | null;
+
+      if (!state) {
+        return;
+      }
+
+      isRestoringFromHistory.current = true;
+
+      if (state.showResults) {
+        setShowResults(true);
+      } else {
+        setShowResults(false);
+        setCurrentSpinnerIndex(state.spinnerIndex);
+        setHasResult(results[state.spinnerIndex] !== undefined);
+      }
+
+      isRestoringFromHistory.current = false;
+    };
+
+    window.addEventListener("popstate", handlePopState);
+
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+    };
+  }, [results]);
+
+  useEffect(() => {
+    if (spinners.length === 0 || isRestoringFromHistory.current) {
+      return;
+    }
+
+    const url = new URL(window.location.href);
+    const spinnerParam = url.searchParams.get("spinner");
+    const viewParam = url.searchParams.get("view");
+
+    if (viewParam === "results") {
+      setShowResults(true);
+      const state: HistoryState = {
+        spinnerIndex: currentSpinnerIndex,
+        showResults: true,
+      };
+      window.history.replaceState(state, "", url);
+    } else if (spinnerParam !== null) {
+      const index = parseInt(spinnerParam, 10) - 1;
+      if (!isNaN(index) && index >= 0 && index < spinners.length) {
+        setCurrentSpinnerIndex(index);
+        const state: HistoryState = {
+          spinnerIndex: index,
+          showResults: false,
+        };
+        window.history.replaceState(state, "", url);
+      }
+    } else {
+      const state: HistoryState = {
+        spinnerIndex: 0,
+        showResults: false,
+      };
+      url.searchParams.set("spinner", "1");
+      window.history.replaceState(state, "", url);
+    }
+  }, [spinners.length, currentSpinnerIndex]);
+
   const handleNext = useCallback(() => {
     if (currentSpinnerIndex === spinners.length - 1) {
       setShowResults(true);
+      pushHistoryState(currentSpinnerIndex, true);
     } else if (currentSpinnerIndex < spinners.length - 1) {
-      setCurrentSpinnerIndex((prevIndex) => prevIndex + 1);
+      const newIndex = currentSpinnerIndex + 1;
+      setCurrentSpinnerIndex(newIndex);
       setHasResult(false);
+      pushHistoryState(newIndex, false);
     }
-  }, [currentSpinnerIndex, spinners.length]);
+  }, [currentSpinnerIndex, spinners.length, pushHistoryState]);
 
   const handlePrevious = useCallback(() => {
     if (currentSpinnerIndex > 0) {
-      setCurrentSpinnerIndex((prevIndex) => prevIndex - 1);
+      const newIndex = currentSpinnerIndex - 1;
+      setCurrentSpinnerIndex(newIndex);
       setHasResult(false);
+      pushHistoryState(newIndex, false);
     }
-  }, [currentSpinnerIndex]);
+  }, [currentSpinnerIndex, pushHistoryState]);
 
-  const handleSpinComplete = useCallback((result: string) => {
-    setHasResult(true);
-    setResults((prev) => ({
-      ...prev,
-      [currentSpinnerIndex]: result,
-    }));
-  }, [currentSpinnerIndex]);
+  const handleSpinComplete = useCallback(
+    (result: string) => {
+      setHasResult(true);
+      setResults((prev) => ({
+        ...prev,
+        [currentSpinnerIndex]: result,
+      }));
+    },
+    [currentSpinnerIndex],
+  );
 
   const handleSpinStart = useCallback(() => {
     setIsSpinning(true);
@@ -117,7 +215,8 @@ function App() {
 
   const handleBackToSpinners = useCallback(() => {
     setShowResults(false);
-  }, []);
+    pushHistoryState(currentSpinnerIndex, false);
+  }, [currentSpinnerIndex, pushHistoryState]);
 
   const hasSpinners = spinners.length > 0;
   const currentSpinner = useMemo(
@@ -158,12 +257,14 @@ function App() {
             <div className="spinner-wrapper">
               <h2 className="spinner-title">{currentSpinner.name}</h2>
               <Spinner
+                key={currentSpinnerIndex}
                 items={currentSpinner.items}
                 onSpinComplete={handleSpinComplete}
                 onSpinStart={handleSpinStart}
                 onSpinEnd={handleSpinEnd}
                 muted={muted}
                 onMutedChange={setMuted}
+                initialResult={results[currentSpinnerIndex]}
               >
                 <div className="navigation-buttons">
                   <button
