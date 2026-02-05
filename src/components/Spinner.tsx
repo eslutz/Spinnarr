@@ -69,13 +69,15 @@ function Spinner({
   const [spinning, setSpinning] = useState(false);
   const [rotation, setRotation] = useState(0);
   const [result, setResult] = useState<string | null>(initialResult ?? null);
+  const [prevInitialResult, setPrevInitialResult] = useState(initialResult);
   const animationRef = useRef<number | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const audioBufferRef = useRef<AudioBuffer | null>(null);
 
-  useEffect(() => {
+  if (initialResult !== prevInitialResult) {
+    setPrevInitialResult(initialResult);
     setResult(initialResult ?? null);
-  }, [initialResult]);
+  }
 
   useEffect(() => {
     try {
@@ -151,6 +153,10 @@ function Spinner({
       return;
     }
 
+    if (!muted && audioContextRef.current?.state === "suspended") {
+      void audioContextRef.current.resume();
+    }
+
     if (animationRef.current !== null) {
       cancelAnimationFrame(animationRef.current);
     }
@@ -213,7 +219,7 @@ function Spinner({
     };
 
     animationRef.current = requestAnimationFrame(animate);
-  }, [items, onSpinComplete, onSpinEnd, onSpinStart, playTick, rotation, segmentAngle, spinning]);
+  }, [items, onSpinComplete, onSpinEnd, onSpinStart, playTick, rotation, segmentAngle, spinning, muted]);
 
   useEffect(() => {
     const handleKeyPress = (event: KeyboardEvent) => {
@@ -280,6 +286,9 @@ function Spinner({
         onClick={() => {
           triggerHaptic("soft");
           onMutedChange(!muted);
+          if (muted && audioContextRef.current?.state === "suspended") {
+            void audioContextRef.current.resume();
+          }
         }}
         type="button"
         aria-pressed={muted}

@@ -60,7 +60,9 @@ function App() {
 
   const handleFileLoad = useCallback((data: unknown, sourceFileName: string = UPLOAD_FILE_LABEL): boolean => {
     if (!isCollectionConfig(data)) {
-      alert('JSON must include a non-empty "spinners" array with non-empty names/items. See schema.json for format.');
+      alert(
+        'JSON must include a non-empty "spinners" array with non-empty names/items. See docs/schema.json for format.',
+      );
       return false;
     }
 

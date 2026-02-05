@@ -172,7 +172,7 @@ Your JSON file must follow this structure:
 
 ### Validation
 
-The app validates uploaded JSON files against [schema.json](schema.json). Invalid files will show an error message.
+The app validates uploaded JSON files against [docs/schema.json](docs/schema.json). Invalid files will show an error message.
 
 ### Example
 
@@ -244,7 +244,8 @@ src/
       └── index.css          # Global styles and theme variables
 public/
   └── Minecraft-House-Builder.json  # Example spinner configuration
-schema.json                  # JSON schema for validation
+docs/
+  └── schema.json            # JSON schema for validation
 
 ## Contributing
 
