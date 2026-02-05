@@ -42,19 +42,66 @@ A modern web application for randomly selecting items from multiple spinners. Pe
 
 ### Running with Docker
 
-1. Build the Docker image:
+**Using Docker Run:**
 
-   ```bash
-   docker build -t spinnarr .
-   ```
+First, either pull from GitHub Container Registry or build locally:
 
-2. Run the container:
+```bash
+# Option 1: Pull from GitHub Container Registry (if published)
+docker pull ghcr.io/eslutz/spinnarr:latest
 
-   ```bash
-   docker run -p 8080:80 spinnarr
-   ```
+# Option 2: Build locally
+docker build -t ghcr.io/eslutz/spinnarr:latest .
+```
 
-3. Open your browser to `http://localhost:8080`
+Then run:
+
+```bash
+docker run -d \
+  --name spinnarr \
+  -p 8080:80 \
+  --restart unless-stopped \
+  ghcr.io/eslutz/spinnarr:latest
+```
+
+**Using Docker Compose:**
+
+See [docs/docker-compose.example.yml](docs/docker-compose.example.yml) for a complete example.
+
+```yaml
+services:
+  spinnarr:
+    image: ghcr.io/eslutz/spinnarr:latest
+    container_name: spinnarr
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    volumes:
+      # Optional: Mount custom spinner configurations
+      - ./spinners:/usr/share/nginx/html/public
+    environment:
+      - TZ=America/New_York
+```
+
+Then run:
+
+```bash
+docker-compose up -d
+```
+
+Open your browser to `http://localhost:8080`
+
+**Custom Spinner Configurations:**
+
+To use custom spinner JSON files with Docker, mount a directory containing your JSON files to `/usr/share/nginx/html/public`:
+
+```bash
+docker run -d \
+  --name spinnarr \
+  -p 8080:80 \
+  -v ./my-spinners:/usr/share/nginx/html/public:ro \
+  ghcr.io/eslutz/spinnarr:latest
+```
 
 ## Build
 

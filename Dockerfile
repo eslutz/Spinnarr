@@ -13,7 +13,7 @@ RUN npm ci
 COPY . .
 
 # Set environment variable for Vite build
-ENV VITE_DEFAULT_SPINNER_FILE=/minecraftSpinnerOptions.json
+ENV VITE_DEFAULT_SPINNER_FILE=/Minecraft-House-Builder.json
 
 # Build the application
 RUN npm run build

@@ -1,6 +1,6 @@
 services:
   spinnarr:
-    image: eslutz/spinnarr:latest
+    image: ghcr.io/eslutz/spinnarr:latest
     container_name: spinnarr
     restart: unless-stopped
     ports:
