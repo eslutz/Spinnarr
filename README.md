@@ -326,5 +326,3 @@ You are free to use, modify, and distribute this software under the terms of the
 Other tools in the ecosystem:
 
 - **[Torarr](https://github.com/eslutz/torarr)** - Tor SOCKS proxy container for the *arr stack with health monitoring
-- **[Forwardarr](https://github.com/eslutz/forwardarr)** - Automatic port forwarding sync from Gluetun VPN to qBittorrent
-- **[Unpackarr](https://github.com/eslutz/unpackarr)** - Container-native archive extraction service for Sonarr, Radarr, and more
